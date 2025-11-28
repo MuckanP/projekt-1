@@ -1,0 +1,5 @@
+dealership 
+
+id,make,model,year,hp,torque,price
+
+LÄGG TILL MILTAL

@@ -1,0 +1,15 @@
+id,make,model,year,odometer,hp,torque,price
+1,Toyota,Corolla,2020,50000 km,139 hp,126 Nm,20000 $
+2,Honda,Civic,2021,30000 km,158 hp,138 Nm,22000 $
+3,Nissan,Altima,2021,25000 km,188 hp,244 Nm,24000 $
+4,BMW,3 Series,2020,40000 km,255 hp,295 Nm,41000 $
+5,Mercedes-Benz,C-Class,2021,35000 km,255 hp,273 Nm,42000 $
+6,Audi,A4,2019,45000 km,188 hp,236 Nm,39000 $
+7,Volkswagen,Passat,2020,37000 km,174 hp,206 Nm,23000 $
+8,Hyundai,Elantra,2021,28000 km,147 hp,132 Nm,19500 $
+9,Saab,9-3,2011,60000 km,210 hp,300 Nm,15000 $
+10,Volvo,S40,2012,55000 km,200 hp,280 Nm,16000 $
+11,Porsche,911 GT3 RS,2021,15000 km,525 hp,450 Nm,200000 $
+12,Honda,Accord,2009,120000 km,130 hp,170 Nm,7000 $
+13,Volkswagen,Golf Mk3,1996,180000 km,230 hp,250 Nm,10000 $
+14,Honda,Prelude SH,1997,220000 km,195 hp,155 Nm,4000 $
