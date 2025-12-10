@@ -11,5 +11,5 @@ id,make,model,year,odometer,hp,torque,price
 10,Volvo,S40,2012,55000 km,200 hp,280 Nm,16000 $
 12,Honda,Accord,2009,120000 km,130 hp,170 Nm,7000 $
 13,Volkswagen,Golf Mk3,1996,300000 km,130 hp,140 Nm,3000 $
-14,Honda,Prelude SH,1997,220000 km,195 hp,155 Nm,4000 $
-16,BMW,Isetta,1953,50000 km,15 hp,20 Nm,100000 $
+14,Honda,Prelude S,1997,220000 km,195 hp,155 Nm,4000 $
+15,BMW,Isetta,1953,50000 km,15 hp,20 Nm,100000 $

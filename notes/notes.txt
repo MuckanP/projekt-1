@@ -5,3 +5,6 @@ numera:
 id,make,model,year,odometer,hp,torque,price
 
 LÄGG TILL MILTAL, gjort 
+
+sortera klasser o funktioner, gjort ish
+finare kod > spaghetti kod
