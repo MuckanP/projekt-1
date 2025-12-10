@@ -1,5 +1,3 @@
-#LÄGG TILL MILTAL SENARE
-
 import customtkinter as ctk
 from tkinter import ttk, messagebox
 import csv
@@ -41,11 +39,11 @@ def auto_suffix(field, value): # lägger till suffix/enheter automatiskt
 
 
 # === CSV HELPERS ===
-def load_csv(filename):
+def load_csv(filename): #laddar in csv filen
     if not os.path.exists(filename):
         return []
 
-    with open(filename, "r", encoding="utf-8-sig") as f:
+    with open(filename, "r", encoding="utf-8-sig", newline='') as f:
         reader = csv.reader(f)
 
         rows = list(reader)
@@ -58,7 +56,7 @@ def load_csv(filename):
         data = []
         for row in rows[1:]:
             # Skip blank lines
-            if not any(row):
+            if not any(cell.strip() for cell in row):
                 continue
 
             entry = {}
@@ -67,19 +65,35 @@ def load_csv(filename):
                     entry[header] = row[idx].strip()
                 else:
                     entry[header] = ""      # missing value
+
+            # Ensure all expected FIELDNAMES exist (use empty string if missing)
+            for k in FIELDNAMES:
+                entry.setdefault(k, "")
+
             data.append(entry)
 
         return data
 
 
-def save_csv(filename, data, fieldnames):
+def save_csv(filename, data, fieldnames): #sparar till csv filen
+    # Make sure directory exists (if path contains dirs)
+    os.makedirs(os.path.dirname(os.path.abspath(filename)), exist_ok=True)
     with open(filename, "w", newline='', encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(data)
 
-# === MAIN APPLICATION ===
-class CarDealerApp(ctk.CTk):
+
+def remove_car_by_id(cars, car_id):
+    """Safe removal by id. Returns True if removed, False if not found."""
+    for i, car in enumerate(cars):
+        if str(car.get("id", "")) == str(car_id):
+            del cars[i]
+            return True
+    return False
+
+
+class CarDealerApp(ctk.CTk): #huvud programmet
     def __init__(self):
         super().__init__()
         self.title("Car Dealership Inventory")
@@ -125,9 +139,10 @@ class CarDealerApp(ctk.CTk):
         title.pack(pady=10)
 
         # --- TREEVIEW ---
-        self.tree = ttk.Treeview(frame, columns=FIELDNAMES, show="headings")
+        self.tree = ttk.Treeview(frame, columns=FIELDNAMES, show="headings", selectmode="browse")
 
         for col in FIELDNAMES:
+            # Use closure default to bind correct column name
             self.tree.heading(col, text=col.upper(), command=lambda c=col: self.sort_by(c))
             self.tree.column(col, width=130)
 
@@ -147,43 +162,82 @@ class CarDealerApp(ctk.CTk):
 
         self.populate_tree()
 
-    # === TABLE POPULATION ===
-    def populate_tree(self):
+    def populate_tree(self): #fyller tabellen med data
         for row in self.tree.get_children():
             self.tree.delete(row)
 
         for i, car in enumerate(self.data):
             tag = "odd" if i % 2 else "even"
-            self.tree.insert("", "end", values=[car[k] for k in FIELDNAMES], tags=(tag,))
+            # Use get to avoid KeyError if a key is missing
+            values = [car.get(k, "") for k in FIELDNAMES]
+            self.tree.insert("", "end", values=values, tags=(tag,))
 
         self.tree.tag_configure("even", background="#1a1a1a")
         self.tree.tag_configure("odd", background="#212121")
 
-    # === SORTING ===
-    def sort_by(self, column):
+    def sort_by(self, column): #TODO sorterar tabellen, fungerar ej för nummer just nu 
+        
+        def parse_value(val):
+            if val is None:
+                return 0
+
+            s = str(val).lower().strip()
+
+            # Remove common units and symbols
+            for unit in ["hp", "nm", "$", "km"]:
+                s = s.replace(unit, "").strip()
+
+            # Remove commas or extra spaces
+            s = s.replace(",", "").strip()
+
+            # If it's numeric, return number
+            if s.replace(".", "", 1).isdigit():
+                try:
+                    return float(s)
+                except:
+                    return s
+        
+            # Fallback: sort as text
+            return s
+
         if self.sort_column == column:
             self.sort_reverse = not self.sort_reverse
         else:
             self.sort_column = column
             self.sort_reverse = False
 
-        self.data.sort(key=lambda x: x[column].lower(), reverse=self.sort_reverse)
+        # Sort using parsed numeric-aware value
+        self.data.sort(key=lambda x: parse_value(x.get(column, "")), 
+                   reverse=self.sort_reverse)
+
         self.populate_tree()
 
-    # === ADD / EDIT / DELETE ===
-    def add_window(self):
+    def add_window(self): #lägger till en bil
         CarEditor(self, "Add Car", None)
 
-    def edit_window(self):
+    def edit_window(self): #ska redigera bil, fungerar ej just nu
         sel = self.tree.selection()
         if not sel:
             messagebox.showwarning("No Selection", "Select a car to edit.")
             return
-        values = self.tree.item(sel[0])["values"]
-        car = dict(zip(FIELDNAMES, values))
-        CarEditor(self, "Edit Car", car)
 
-    def delete_car(self):
+        # Get ID from selected row values
+        values = self.tree.item(sel[0])["values"]
+        if not values:
+            messagebox.showerror("Error", "Selected row is empty.")
+            return
+        selected_id = str(values[0])
+
+        # Find the car in self.data by id (use string comparison for safety)
+        for car in self.data:
+            if str(car.get("id", "")) == selected_id:
+                # Pass the actual car dict (not a shallow zip copy), so editor can reference original id
+                CarEditor(self, "Edit Car", car)
+                return
+
+        messagebox.showerror("Not Found", f"Car with ID {selected_id} not found in data.")
+
+    def delete_car(self): #ska ta bort bil, fungerar ej just nu
         sel = self.tree.selection()
         if not sel:
             messagebox.showwarning("No Selection", "Select a car to delete.")
@@ -191,27 +245,35 @@ class CarDealerApp(ctk.CTk):
         
         # Get the ID of the selected car
         values = self.tree.item(sel[0])["values"]
-        car_id = values[0]  # ID is the first value
+        if not values:
+            messagebox.showerror("Error", "Selected row is empty.")
+            return
+        car_id = str(values[0])  # ID is the first value
         
         # Confirm deletion
         result = messagebox.askyesno("Confirm Delete", f"Are you sure you want to delete car with ID: {car_id}?")
         if result:
-            # Remove the car from data
-            self.data = [car for car in self.data if car["id"] != car_id]
-            
-            # Save to CSV and refresh the table
-            save_csv(CSV_FILE, self.data, FIELDNAMES)
-            self.populate_tree()
-            messagebox.showinfo("Success", "Car deleted successfully.")
+            # Remove the car from data safely
+            removed = remove_car_by_id(self.data, car_id)
+            if removed:
+                # Save to CSV and refresh the table
+                save_csv(CSV_FILE, self.data, FIELDNAMES)
+                self.populate_tree()
+                messagebox.showinfo("Success", "Car deleted successfully.")
+            else:
+                messagebox.showerror("Not Found", f"Could not find car with ID: {car_id}.")
 
-# === EDITOR WINDOW ===
+
+# editor
 class CarEditor(ctk.CTkToplevel):
     def __init__(self, master, title, car):
         super().__init__(master)
         self.title(title)
-        self.geometry("400x500")
+        self.geometry("420x520")
         self.master = master
+        # store a reference to the original car dict if editing; if adding, car is None
         self.car = car or {}
+        self.original_id = str(self.car.get("id", "")) if car else None
 
         self.inputs = {}
 
@@ -221,7 +283,7 @@ class CarEditor(ctk.CTkToplevel):
             frame = ctk.CTkFrame(self)
             frame.pack(fill="x", pady=5, padx=15)
 
-            ctk.CTkLabel(frame, text=field.upper(), width=90).pack(side="left")
+            ctk.CTkLabel(frame, text=field.upper(), width=110).pack(side="left")
             entry = ctk.CTkEntry(frame)
             entry.pack(side="right", fill="x", expand=True)
 
@@ -236,19 +298,29 @@ class CarEditor(ctk.CTkToplevel):
 
         for field in FIELDNAMES:
             raw = self.inputs[field].get().strip()
-            new_data[field] = auto_suffix(field, raw)
+            # For id and year we keep as-is (string), for numeric fields we add suffixes if needed
+            new_data[field] = auto_suffix(field, raw) if field in ("hp", "torque", "price", "odometer") else raw
 
-        if not all(new_data.values()):
+        if not all(str(v).strip() for v in new_data.values()):
             messagebox.showwarning("Missing Data", "All fields must be filled.")
             return
 
-        if self.car:  # Update
+        # If editing: replace the correct item by matching original_id (so changing ID still works)
+        if self.car:
+            # find index by original_id (fallback to current id)
+            lookup_id = self.original_id if self.original_id is not None else new_data.get("id", "")
+            updated = False
             for i, c in enumerate(self.master.data):
-                if c["id"] == self.car["id"]:
+                if str(c.get("id", "")) == str(lookup_id):
                     self.master.data[i] = new_data
+                    updated = True
                     break
-        else:  # Add
-            if any(c["id"] == new_data["id"] for c in self.master.data):
+            if not updated:
+                messagebox.showerror("Error", "Could not find original car to update.")
+                return
+        else:  # lägg till 
+            # förhindrar duplicering av ID vid tillägg
+            if any(str(c.get("id", "")) == str(new_data.get("id", "")) for c in self.master.data):
                 messagebox.showerror("Duplicate ID", "ID already exists.")
                 return
             self.master.data.append(new_data)

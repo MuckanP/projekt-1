@@ -1,5 +1,7 @@
 dealership 
 
 id,make,model,year,hp,torque,price
+numera:
+id,make,model,year,odometer,hp,torque,price
 
-LÄGG TILL MILTAL
+LÄGG TILL MILTAL, gjort 
