@@ -3,7 +3,7 @@
 
 import customtkinter as ctk
 from tkinter import messagebox
-from main import CSV_FILE, FIELDNAMES
+from file_edit import CSV_FILE, FIELDNAMES
 from suffix import auto_suffix # importera auto_suffix funktionen
 from file_edit import save_csv
 

@@ -1,7 +1,7 @@
 
 #=== allting att göra med suffix ===#
 
-from main import FIELDNAMES
+from file_edit import FIELDNAMES
 
 def auto_suffix(field, value): # lägger till suffix/enheter automatiskt
     value = value.strip()

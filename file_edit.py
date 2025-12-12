@@ -4,8 +4,9 @@
 
 import csv 
 import os
-from main import FIELDNAMES
 
+CSV_FILE = "cars.csv"  # CSV filens namn
+FIELDNAMES = ["id", "make", "model", "year", "odometer", "hp", "torque", "price"]
 
 def load_csv(filename): #laddar in csv filen
     if not os.path.exists(filename):
@@ -50,7 +51,6 @@ def save_csv(filename, data, fieldnames): #sparar till csv filen
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(data)
-
 
 def remove_car_by_id(cars, car_id):
     # tar bort produkt via id
